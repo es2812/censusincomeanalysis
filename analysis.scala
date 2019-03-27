@@ -27,11 +27,9 @@ import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics, Multiclas
  */
 val PATH="./datos/"
 val DATA="adult.data"
-val TEST="adult.test"
 
-val ATTR= Array("age","workclass","fnlwgt","education","education-num","marital-status","occupation","relationship","race","sex","cap-gain","cap-loss", "hours-week", 
-  "native-country", "label")
-val CONTATTR = Array("age","fnlwgt","education-num","cap-gain","cap-loss","hours-week")
+val ATTR= Array("age","workclass","fnlwgt","education","education-num","marital-status","occupation","relationship","race","sex","capital-gain","capital-loss", "hours-week", "native-country", "label")
+val CONTATTR = Array("age","fnlwgt","education-num","capital-gain","capital-loss","hours-week")
 val CATATTR = ATTR.diff(CONTATTR)
 
 //creamos un Schema para el dataframe, con los tipos apropiados
@@ -46,8 +44,8 @@ val adultSchema =StructType(Array(
   StructField("relationship",StringType,true), 
   StructField("race",StringType,true), 
   StructField("sex",StringType,true),
-  StructField("cap-gain",DoubleType,true), 
-  StructField("cap-loss",DoubleType,true), 
+  StructField("capital-gain",DoubleType,true), 
+  StructField("capital-loss",DoubleType,true), 
   StructField("hours-week",DoubleType,true), 
   StructField("native-country",StringType,true), 
   StructField("label",StringType,true) 
@@ -64,7 +62,7 @@ def getStringRDD(path:String, file:String):RDD[Array[String]] = {
 }
 
 def selectAttributes(df:DataFrame, attrs:Array[String]): DataFrame = {
-  val drops = df.columns.diff(attrs).diff("label")
+  val drops = df.columns.diff(attrs)
   var newdf = df
   for(d<-drops){
     newdf = newdf.drop(d)   
@@ -78,6 +76,9 @@ def indexStringColumns(df:DataFrame, cols:Array[String]):DataFrame = {
     val si = new
     StringIndexer().setInputCol(col).setOutputCol(col+"-numeric")
     val sm:StringIndexerModel = si.fit(newdf)
+    println(col)
+    sm.labels.foreach(println)
+    println("--------------------")
     newdf = sm.transform(newdf).drop(col)
     newdf = newdf.withColumnRenamed(col+"-numeric", col)
   }
@@ -89,36 +90,32 @@ def indexStringColumns(df:DataFrame, cols:Array[String]):DataFrame = {
  */
 
 val dataRDD = getStringRDD(PATH,DATA)
-val testRDD = getStringRDD(PATH,TEST)
 
 val dataRDDNumeric = dataRDD.map(a=>Array(a(0).toDouble,a(1),a(2).toDouble,a(3),a(4).toDouble,a(5),a(6),a(7),a(8),a(9),a(10).toDouble,a(11).toDouble,a(12).toDouble,a(13),a(14)))
-val testRDDNumeric = testRDD.map(a=>Array(a(0).toDouble,a(1),a(2).toDouble,a(3),a(4).toDouble,a(5),a(6),a(7),a(8),a(9),a(10).toDouble,a(11).toDouble,a(12).toDouble,a(13),a(14)))
 
 val dataDF = spark.createDataFrame(dataRDDNumeric.map(Row.fromSeq(_)),adultSchema)
-val testDF = spark.createDataFrame(testRDDNumeric.map(Row.fromSeq(_)),adultSchema)
 
 /*
  *     Selección de atributos
- *        Nos deshacemos de los atributos que hemos encontrado tener distribuciones similares entre clases o mucha complejidad (estos últimos se podrían agrupar)
+ *        Podemos eliminar ciertos atributos
  */
 
-val dataSimpleDF = selectAttributes(dataDF,Array("age","education","education-num","marital-status","occupation","relationship","sex","hours-per-week"))
-val testSimpleDF = selectAttributes(testDF,Array("age","education","education-num","marital-status","occupation","relationship","sex","hours-per-week"))
+val ATTR = Array("age","workclass","education","marital-status","relationship","race","sex","capital-gain","capital-loss", "label")
+val dataSimpleDF = selectAttributes(dataDF,ATTR)
+val CATATTR = ATTR.diff(CONTATTR)
 
 /*
  *  Transformamos el DataFrame en uno con columna label y features, para lo cual debemos convertir los strings en doubles. 
  *  Utilizamos un StringIndexer.
  */
 
-val numdataDF = indexStringColumns(dataSimpleDF,Array("education","marital-status","occupation","relationship","sex"))
-val numtestDF = indexStringColumns(testSimpleDF,Array("education","marital-status","occupation","relationship","sex"))
+val numdataDF = indexStringColumns(dataSimpleDF,CATATTR)
 
 val assembler = new VectorAssembler()
 assembler.setOutputCol("features")
 assembler.setInputCols(numdataDF.columns.diff(Array("label")))
 
 val mldataDF = assembler.transform(numdataDF).select("features","label")
-val mltestDF = assembler.transform(numtestDF).select("features","label")
 
 /*
  * Creamos un árbol de decisión con parámetros prefijados
@@ -130,7 +127,6 @@ val maxBins = 16
 
 DT.setImpurity(impureza)
 DT.setMaxBins(maxBins)
-
 
 val meval = new MulticlassClassificationEvaluator()
 meval.setMetricName("accuracy")
@@ -145,14 +141,3 @@ val cvModel = crossval.fit(mldataDF)
 
 val DTmodel = cvModel.bestModel
 DTmodel.extractParamMap()
-
-/*
- *  Utilizamos MLLib para evaluar el modelo en los datos de test
- */
-
-val predictionsAndLabels = DTmodel.transform(mltestDF).select("prediction","label")
-
-val meval = new MulticlassMetrics(predictionsAndLabelsRDD)
-val beval = new BinaryClassificationMetrics(predictionsAndLabelsRDD)
-
-println(s"Tasa de error: ${meval.accuracy}")
