@@ -1,64 +1,94 @@
-1. Primer experimento: StringIndexer, todos los atributos. No nulls. DT entropy, 41 maxBin CrossVal con 5 folds de profundidad entre 1 y 20: Profundidad 8
+# Experimentos
 
-Tasa de acierto: 84.03718459495352%
+## Primer experimento
 
-Tasa de falsos positivos para <=50k: 24.24483306836248%
-Tasa de falsos positivos para >50k: 14.301658163265307%
-Tasa de aciertos positivos para <=50k: 85.6983418367347%
-Tasa de aciertos positivos para >50k: 75.75516693163752%
+- StringIndexer
+- Sin selección de atributos
+- No nulls
+- Entropy, 41 maxBin 
+- CrossVal con 5 folds de profundidad entre 1 y 20
 
-Area bajo la curva ROC: 0.807267543841861
-Area bajo la curva PR: 0.4729406323773212
++ Depth: 8
++ Tasa de acierto: 84.5484727755644%
++ Tasa de falsos positivos para <=50k: 21.667354519191086%
++ Tasa de falsos positivos para >50k: 14.25971353960592%
++ Tasa de aciertos positivos para <=50k: 85.74028646039407%
++ Tasa de aciertos positivos para >50k: 78.33264548080892%
++ Area bajo la curva ROC: 0.820364659706015
++ Precisión para <=50k: 0.9537852112676056
++ Recall para <=50k: 0.8574028646039408
++ Precisión para >50k: 0.512972972972973
++ Recall para >50k: 0.7833264548080892
++ Area bajo la curva PR: 0.47482941553659097
 
-1. Segundo experimento: StringIndexer, 8 atributos ("age","education","education-num","marital-status","occupation","relationship","sex","hours-per-week"), no nulls. crossVal con 3 folds de profundidad entre 1 y 20 maxBins=16: Profundidad 9
- 
-Tasa de acierto: 28.751660026560426%
+## Segundo experimento
 
-Tasa de falsos positivos para <=50k: 77.41381999688036%
-Tasa de falsos positivos para >50k: 35.924932975871315%
-Tasa de aciertos positivos para <=50k: 64.07506702412869%
-Tasa de aciertos positivos para >50k: 22.586180003119637%
+- StringIndexer
+- 8 atributos ("age","education","education-num","marital-status","occupation","relationship","sex","hours-per-week")
+- No nulls
+- Entropy, 16 maxBin 
+- CrossVal con 5 folds de profundidad entre 1 y 20
 
-Area bajo la curva ROC: 0.4333062351362416
-Area bajo la curva PR: 0.8092911447877731
++ Depth: 9
++ Tasa de acierto: 82.70252324037185%
++ Tasa de falsos positivos para <=50k: 32.89597000937207%
++ Tasa de falsos positivos para >50k: 13.087106838687918%
++ Tasa de aciertos positivos para <=50k: 86.91289316131208%
++ Tasa de aciertos positivos para >50k: 67.10402999062794%
++ Area bajo la curva ROC: 0.7700846157597001
++ Precisión para <=50k: 0.9073063380281691
++ Recall para <=50k: 0.8691289316131209
++ Precisión para >50k: 0.5805405405405405
++ Recall para >50k: 0.6710402999062793
++ Area bajo la curva PR: 0.520013478848859
 
-3. Tercer experimento: StringIndexer, ("age","workclass","education","marital-status","relationship","race","sex","label"), no nulls. crossVal con 3 folds de profundidad entre 1 y 20 maxbins=16: Profundidad 9
 
-Tasa de acierto: 82.19787516600266%
+## Tercer experimento
 
-Tasa de falsos positivos para <=50k: 32.792975346166834%
-Tasa de falsos positivos para >50k: 14.133399454500372%
+- StringIndexer
+- 9 atributos ("age","fnlwgt","capital-gain","capital-loss","workclass","education","marital-status","relationship","sex")
+- No nulls
+- Entropy, 16 maxBin 
+- CrossVal con 5 folds de profundidad entre 1 y 20
 
-Tasa de aciertos positivos para <=50k: 85.86660054549962%
-Tasa de aciertos positivos para >50k: 67.20702465383317%
++ Depth: 9
++ Tasa de acierto: 83.17397078353254%
++ Tasa de falsos positivos para <=50k: 29.938059187887127%
++ Tasa de falsos positivos para >50k: 13.690965937140037%
++ Tasa de aciertos positivos para <=50k: 86.30903406285996%
++ Tasa de aciertos positivos para >50k: 70.06194081211287%
++ Precisión para <=50k: 0.9234154929577465
++ Recall para <=50k: 0.8630903406285997
++ Precisión para >50k: 0.5502702702702703
++ Recall para >50k: 0.7006194081211287
++ Area bajo la curva ROC: 0.7818548743748641
++ Area bajo la curva PR: 0.4967846128182347
 
-Area bajo la curva ROC: 0.765368125996664
-Area bajo la curva PR: 0.48188903885903117
+Como se puede ver la clase mayoritaria (<=50k) tiene un correcto resultado, para >50k, sin embargo, la precisión es muy baja, aunque recall es bueno. Esto quiere decir que consigue clasificar un 70% de las instancias de >50k, sin embargo solo un 55% de las que clasifica como >50k lo son.
 
-4. Experimento 4: lo mismo que arriba pero con `fnlwgt` añadido. Profundidad 8
 
-Tasa de acierto: 81.83266932270917%
+## Cuarto experimento
 
-Tasa de falsos positivos para <=50k: 33.53825136612022%
-Tasa de falsos positivos para >50k: 14.457632706890866%
+- StringIndexer
+- 8 atributos ("age","fnlwgt","capital-loss","workclass","education","marital-status","relationship","sex")
+- No nulls
+- Entropy, 16 maxBin 
+- CrossVal con 5 folds de profundidad entre 1 y 20
 
-Tasa de aciertos positivos para <=50k: 85.54236729310914%
-Tasa de aciertos positivos para >50k: 66.46174863387978%
++ Depth: 9
++ Tasa de acierto: 82.04515272244356%
++ Area bajo la curva ROC: 0.7648615160189981
++ Tasa de falsos positivos para <=50k: 32.42766407904023%
++ Tasa de falsos positivos para >50k: 14.60003271716015%
++ Tasa de aciertos positivos para <=50k: 85.39996728283985%
++ Tasa de aciertos positivos para >50k: 67.57233592095977%
++ Precisión para <=50k: 0.9191021126760563
++ Recall para <=50k: 0.8539996728283985
++ Precisión para >50k: 0.5175675675675676
++ Recall para >50k: 0.6757233592095977
++ Area bajo la curva PR: 0.4641613196517433
 
-Area bajo la curva ROC: 0.7600205796349446
-Area bajo la curva PR: 0.4703523308920572
+Peor
 
-5. Experimento 5: lo mismo que 3 pero añadiendo `capital-gain` y `capital-loss`. Profundidad 12:
-
-Tasa de acierto: 83.38645418326693%
-
-Tasa de falsos positivos para <=50k: 29.818059299191376%
-Tasa de falsos positivos para >50k: 13.372477671187562%
-
-Tasa de aciertos positivos para <=50k: 86.62752232881243%
-Tasa de aciertos positivos para >50k: 70.18194070080862%
-
-Area bajo la curva ROC: 0.7840473151481053
-Area bajo la curva PR: 0.508421635632744
-
-Best so far: 5. TODO: eliminar los outliers de `capital-gain`
+TODO: hacer PCA tras **escalar**
+Ideas: considerar capital-gain o loss, ya que en muchos casos es 0. education-num y education son redundantes. fnlwgt es un parámetro con demasiados valores distintos, native-country y race tienen muchos valores distintos pero las proporciones son, en todos los casos muy desbalanceadas (mayoría de americanos y blancos)

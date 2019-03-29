@@ -1,143 +1,92 @@
 /* 
- * Experimentos de clasificación para el dataset Census Income Dataset de UCI.
+ * Creación de modelos de clasificación para el dataset Census Income Dataset de UCI.
  *
  * Autor: Esther Cuervo Fernández
  *        25-03-2019
  *
  */
 
-import org.apache.spark.rdd.RDD
+package censusincomeanalysis
 
-import org.apache.spark.sql.types.{StructType,StructField,StringType,DoubleType,IntegerType}
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Row
-
-import org.apache.spark.ml.feature.{StringIndexer,StringIndexerModel}
-import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel, VectorAssembler, StandardScaler}
+import org.apache.spark.ml.Pipeline
 
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.tuning.CrossValidator
-import org.apache.spark.ml.tuning.ParamGridBuilder
-
-import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics, MulticlassMetrics}
-
-/*
- *          Algunas definiciones
- */
-val PATH="./datos/"
-val DATA="adult.data"
-
-val ATTR= Array("age","workclass","fnlwgt","education","education-num","marital-status","occupation","relationship","race","sex","capital-gain","capital-loss", "hours-week", "native-country", "label")
-val CONTATTR = Array("age","fnlwgt","education-num","capital-gain","capital-loss","hours-week")
-val CATATTR = ATTR.diff(CONTATTR)
-
-//creamos un Schema para el dataframe, con los tipos apropiados
-val adultSchema =StructType(Array( 
-  StructField("age",DoubleType,true),
-  StructField("workclass",StringType,true),
-  StructField("fnlwgt",DoubleType,true), 
-  StructField("education",StringType,true),
-  StructField("education-num",DoubleType,true),
-  StructField("marital-status",StringType,true), 
-  StructField("occupation",StringType,true), 
-  StructField("relationship",StringType,true), 
-  StructField("race",StringType,true), 
-  StructField("sex",StringType,true),
-  StructField("capital-gain",DoubleType,true), 
-  StructField("capital-loss",DoubleType,true), 
-  StructField("hours-week",DoubleType,true), 
-  StructField("native-country",StringType,true), 
-  StructField("label",StringType,true) 
-)) 
-
-/*
- *          Algunas funciones
- */
-
-def getStringRDD(path:String, file:String):RDD[Array[String]] = {
-  // los valores faltantes se representan con "?", lo podemos cambiar por null para poder leer los datos a un DF
-  // sin embargo para la primera aproximación los eliminamos
-  sc.textFile(path+file).filter(_.nonEmpty).map(line=>line.split(", ")).filter(x=>{!(x.contains("?"))})
-}
-
-def selectAttributes(df:DataFrame, attrs:Array[String]): DataFrame = {
-  val drops = df.columns.diff(attrs)
-  var newdf = df
-  for(d<-drops){
-    newdf = newdf.drop(d)   
-  }
-  newdf
-}
-
-def indexStringColumns(df:DataFrame, cols:Array[String]):DataFrame = {
-  var newdf = df
-  for(col <- cols) {
-    val si = new
-    StringIndexer().setInputCol(col).setOutputCol(col+"-numeric")
-    val sm:StringIndexerModel = si.fit(newdf)
-    println(col)
-    sm.labels.foreach(println)
-    println("--------------------")
-    newdf = sm.transform(newdf).drop(col)
-    newdf = newdf.withColumnRenamed(col+"-numeric", col)
-  }
-  newdf
-}
+import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 
 /*
  *          Leyendo datos
  */
 
-val dataRDD = getStringRDD(PATH,DATA)
-
-val dataRDDNumeric = dataRDD.map(a=>Array(a(0).toDouble,a(1),a(2).toDouble,a(3),a(4).toDouble,a(5),a(6),a(7),a(8),a(9),a(10).toDouble,a(11).toDouble,a(12).toDouble,a(13),a(14)))
-
-val dataDF = spark.createDataFrame(dataRDDNumeric.map(Row.fromSeq(_)),adultSchema)
+val dataDF = getDF(PATH,DATA)
 
 /*
  *     Selección de atributos
- *        Podemos eliminar ciertos atributos
+ *        Podemos eliminar ciertos atributos. 
+ *        NOTA: Debemos seleccionar manualmente "label"
  */
 
-val ATTR = Array("age","workclass","education","marital-status","relationship","race","sex","capital-gain","capital-loss", "label")
-val dataSimpleDF = selectAttributes(dataDF,ATTR)
-val CATATTR = ATTR.diff(CONTATTR)
+val SELATTR = Array("age","fnlwgt","capital-loss","workclass","education","marital-status","relationship","sex","label")
+
+val dataSimpleDF = selectAttributes(dataDF,SELATTR)
+val SELCATATTR = SELATTR.diff(CONTATTR) //guardamos los atributos categóricos en un array, los necesitaremos para la transformación de datos más adelante
 
 /*
- *  Transformamos el DataFrame en uno con columna label y features, para lo cual debemos convertir los strings en doubles. 
- *  Utilizamos un StringIndexer.
- */
+*   Creamos las etapas de la Pipeline de transformación de los datos y modelo:
+*         1) StringIndexer para convertir aquellos atributos categóricos de tipo String en Double.
+*               Este modelo guarda los atributos numéricos en columnas con el nombre original 
+*               concatenado con "_numeric". Deberemos tener esto en cuenta para las subsiguientes etapas.
+*         2) VectorAssembler para construir los DataFrames de features, label.
+*               De nuevo tener en cuenta que el atributo label se llamará "label_numeric"
+*         3) StandardScaler para estandarizar los vectores de features.
+*               Este modelo convierte la columna "features" en "scaled_features" 
+*         M) DecisionTreeClassifer el modelo a utilizar.
+*   Esta Pipeline debe ser introducida en CrossVal, para que se utilice para realizar la transformación de los conjuntos train y validation 
+*   correctamente
+*/
 
-val numdataDF = indexStringColumns(dataSimpleDF,CATATTR)
 
-val assembler = new VectorAssembler()
-assembler.setOutputCol("features")
-assembler.setInputCols(numdataDF.columns.diff(Array("label")))
+// 1)
+var sims = List[StringIndexerModel]()
 
-val mldataDF = assembler.transform(numdataDF).select("features","label")
+for(col<-SELCATATTR){
+  val si = new StringIndexer().setInputCol(col).setOutputCol(col+"_numeric")
+  val sm:StringIndexerModel = si.fit(dataSimpleDF)
+  sims = sims:::List(sm)
+}
 
-/*
- * Creamos un árbol de decisión con parámetros prefijados
- *  IMPORTANTE: El valor maxBins debe valer el menos como el mayor número de distintos valores categoricos
- */
-val DT=new DecisionTreeClassifier()
+// 2)
+
+//las columnas que entrarán en el Assembler serán las correspondientes a atributos continuos seleccionados unión a las categoricas seleccionadas con _numeric añadido al final:
+val INCOLS = SELCATATTR.map(x=>x+"_numeric").union(SELATTR.diff(SELCATATTR)).diff(Array("label_numeric"))
+
+var assembler = new VectorAssembler().setOutputCol("features").setInputCols(INCOLS)
+
+// 3)
+val scaler = new StandardScaler().setInputCol("features").setOutputCol("scaled_features").setWithStd(true).setWithMean(false)
+
+// M)
+//IMPORTANTE: El valor maxBins debe valer el menos como el mayor número de distintos valores categoricos
+// Recordar que las transformaciones resultan en un DF con scaled_features y label_numeric
+
 val impureza = "entropy"
 val maxBins = 16 
+val DT=new DecisionTreeClassifier().setFeaturesCol("scaled_features").setLabelCol("label_numeric").setImpurity(impureza).setMaxBins(maxBins)
 
-DT.setImpurity(impureza)
-DT.setMaxBins(maxBins)
+/*
+*     Creamos el experimento de Validación Cruzada. Utiliza como estimador la pipeline, y como evaluador un MulticlassClassificationEvaluator 
+*     con metrica "accuracy"
+*/
 
-val meval = new MulticlassClassificationEvaluator()
-meval.setMetricName("accuracy")
+val pipeline = new Pipeline().setStages((sims:::List(assembler,scaler,DT)).toArray)
+// Es necesario decirle al evaluador que la etiqueta de clase es label_numeric
+val meval = new MulticlassClassificationEvaluator().setMetricName("accuracy").setLabelCol("label_numeric")
 
-val crossval = new CrossValidator().setEstimator(DT).setEvaluator(meval)
-
+val crossval = new CrossValidator().setEstimator(pipeline).setEvaluator(meval)
 val paramGrid = new ParamGridBuilder().addGrid(DT.maxDepth, Array(1,2,3,4,5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,16,17,18,19,20)).build()
 crossval.setEstimatorParamMaps(paramGrid)
-crossval.setNumFolds(3)
+crossval.setNumFolds(5)
 
-val cvModel = crossval.fit(mldataDF)
-
-val DTmodel = cvModel.bestModel
-DTmodel.extractParamMap()
+val cvModel = crossval.fit(dataSimpleDF)
+cvModel.write.overwrite().save(CVPATH)

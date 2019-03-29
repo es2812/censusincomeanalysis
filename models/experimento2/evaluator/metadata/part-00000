@@ -1,1 +1,1 @@
-{"class":"org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator","timestamp":1553624829970,"sparkVersion":"2.4.0","uid":"mcEval_c0872f4a20d7","paramMap":{"metricName":"accuracy"},"defaultParamMap":{"labelCol":"label","predictionCol":"prediction","metricName":"f1"}}
+{"class":"org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator","timestamp":1553885940742,"sparkVersion":"2.4.0","uid":"mcEval_e513440b8d54","paramMap":{"labelCol":"label_numeric","metricName":"accuracy"},"defaultParamMap":{"labelCol":"label","predictionCol":"prediction","metricName":"f1"}}
