@@ -1,0 +1,1 @@
+{"class":"org.apache.spark.ml.feature.StringIndexerModel","timestamp":1554113639579,"sparkVersion":"2.4.0","uid":"strIdx_cc8c32e46869","paramMap":{"inputCol":"occupation","outputCol":"occupation_numeric"},"defaultParamMap":{"stringOrderType":"frequencyDesc","handleInvalid":"error","outputCol":"strIdx_cc8c32e46869__output"}}

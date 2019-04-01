@@ -19,8 +19,11 @@ val ATTR= Array("age","workclass","fnlwgt","education","education-num","marital-
 val CONTATTR = Array("age","fnlwgt","education-num","capital-gain","capital-loss","hours-week")
 val CATATTR = ATTR.diff(CONTATTR)
 
-val CVPATH = "models/experimento4"
-val PIPEPATH = "models/experimento4/bestModel"
+val TREECVPATH = "models/TREE/experimento1"
+val TREEPATH = "models/TREE/experimento1/bestModel"
+
+val NBCVPATH = "models/NB/experimento2"
+val NBPATH = "models/NB/experimento2/bestModel"
 
 //creamos un Schema para el dataframe, con los tipos apropiados
 val adultSchema =StructType(Array( 

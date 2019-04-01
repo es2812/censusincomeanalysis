@@ -6,8 +6,6 @@
  *
  */
 
-package censusincomeanalysis
-
 import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel, VectorAssembler, StandardScaler}
 import org.apache.spark.ml.Pipeline
 
