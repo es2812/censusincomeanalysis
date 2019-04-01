@@ -3,7 +3,7 @@
  *                          Naive Bayes Classifier
  *
  * Autor: Esther Cuervo Fernández
- *        04-04-2019
+ *        31-03-2019
  *
  */
 
@@ -37,9 +37,9 @@ val SELCONTATTR = SELATTR.diff(SELCATATTR)
 *         1) StringIndexer para convertir aquellos atributos categóricos de tipo String en Double.
 *               Este modelo guarda los atributos numéricos en columnas con el nombre original 
 *               concatenado con "_numeric". Deberemos tener esto en cuenta para las subsiguientes etapas.
-*         2) QuantileDiscretizer discretiza los atributos numéricos en bins de tamaño variable
+*         2) QuantileDiscretizer discretiza los atributos continuos. Se le debe dar un parámetro K para el número de conjuntos. Se aproximará con CV.
 *               Guarda los atributos discretizados en columnas con nombre original concatenado con "_numeric"
-*         2) VectorAssembler para construir los DataFrames de features, label.
+*         3) VectorAssembler para construir los DataFrames de features, label.
 *               De nuevo tener en cuenta que el atributo label se llamará "label_numeric"
 *         M) NaiveBayes (Multinomial). 
 *   Esta Pipeline debe ser introducida en CrossVal, para que se utilice para realizar la transformación de los conjuntos train y validation 
@@ -76,4 +76,7 @@ crossval.setEstimatorParamMaps(paramGrid)
 crossval.setNumFolds(5)
 
 val cvModel = crossval.fit(dataSimpleDF)
+
+println(s"Tasa de acierto media en cada experimento de Validación Cruzada:")
+cvModel.avgMetrics.foreach(println)
 cvModel.write.overwrite().save(NBCVPATH)

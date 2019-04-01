@@ -38,20 +38,23 @@ val predictionsAndLabelsRDD = predictionsAndLabelsDF.rdd.map(row => (row.getDoub
 val meval = new MulticlassMetrics(predictionsAndLabelsRDD)
 val beval = new BinaryClassificationMetrics(predictionsAndLabelsRDD)
 
-println(s"Tasa de acierto: ${meval.accuracy*100}%")
+val error = 1-meval.accuracy
+val std = scala.math.sqrt((error*(1-error))/predictionsAndLabelsRDD.count)
+println(s"Tasa de error: ${error*100}%")
+println(s"STD: ${std}")
+val z = 1.96
+println(s"Intervalo de confianza al 95%: [${error-z*std},${error+z*std}]")
+println("")
 println(s"Area bajo la curva ROC: ${beval.areaUnderROC}")
-
 println(s"Tasa de falsos positivos para <=50k: ${meval.falsePositiveRate(0.0)*100}%")
 println(s"Tasa de falsos positivos para >50k: ${meval.falsePositiveRate(1.0)*100}%")
 println(s"Tasa de aciertos positivos para <=50k: ${meval.truePositiveRate(0.0)*100}%")
 println(s"Tasa de aciertos positivos para >50k: ${meval.truePositiveRate(1.0)*100}%")
-
+println("")
 println(s"Precisión para <=50k: ${meval.precision(0.0)}")
 println(s"Recall para <=50k: ${meval.recall(0.0)}")
-
 println(s"Precisión para >50k: ${meval.precision(1.0)}")
 println(s"Recall para >50k: ${meval.recall(1.0)}")
-
 println(s"Area bajo la curva PR: ${beval.areaUnderPR}")
 
 /*
@@ -72,18 +75,20 @@ val predictionsAndLabelsRDD2 = predictionsAndLabelsDF2.rdd.map(row => (row.getDo
 val meval = new MulticlassMetrics(predictionsAndLabelsRDD2)
 val beval = new BinaryClassificationMetrics(predictionsAndLabelsRDD2)
 
-println(s"Tasa de acierto: ${meval.accuracy*100}%")
+val error = 1-meval.accuracy
+val std = scala.math.sqrt((error*(1-error))/predictionsAndLabelsRDD2.count)
+println(s"Tasa de error: ${error*100}%")
+println(s"STD: ${std}")
+println(s"Intervalo de confianza al 95%: [${error-z*std},${error+z*std}]")
+println("")
 println(s"Area bajo la curva ROC: ${beval.areaUnderROC}")
-
 println(s"Tasa de falsos positivos para <=50k: ${meval.falsePositiveRate(0.0)*100}%")
 println(s"Tasa de falsos positivos para >50k: ${meval.falsePositiveRate(1.0)*100}%")
 println(s"Tasa de aciertos positivos para <=50k: ${meval.truePositiveRate(0.0)*100}%")
 println(s"Tasa de aciertos positivos para >50k: ${meval.truePositiveRate(1.0)*100}%")
-
+println("")
 println(s"Precisión para <=50k: ${meval.precision(0.0)}")
 println(s"Recall para <=50k: ${meval.recall(0.0)}")
-
 println(s"Precisión para >50k: ${meval.precision(1.0)}")
 println(s"Recall para >50k: ${meval.recall(1.0)}")
-
 println(s"Area bajo la curva PR: ${beval.areaUnderPR}")
