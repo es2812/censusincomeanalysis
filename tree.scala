@@ -90,4 +90,4 @@ val cvModel = crossval.fit(dataSimpleDF)
 
 println(s"Tasa de acierto media en cada experimento de Validación Cruzada:")
 cvModel.avgMetrics.foreach(println)
-cvModel.write.overwrite().save(TREECVPATH)
+cvModel.write.overwrite().save(TREEPATH)

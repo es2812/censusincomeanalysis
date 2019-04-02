@@ -1,5 +1,5 @@
 /* 
-*       Incluye algunas definiciones necesarias en ficheros analysis y readandeval
+*       Incluye algunas definiciones necesarias en ficheros nb, tree y readandeval
 */
 
 import org.apache.spark.sql.types.{StructType, StructField, StringType, DoubleType}
@@ -19,11 +19,8 @@ val ATTR= Array("age","workclass","fnlwgt","education","education-num","marital-
 val CONTATTR = Array("age","fnlwgt","education-num","capital-gain","capital-loss","hours-week")
 val CATATTR = ATTR.diff(CONTATTR)
 
-val TREECVPATH = "models/TREE/experimento1"
-val TREEPATH = "models/TREE/experimento1/bestModel"
-
-val NBCVPATH = "models/NB/experimento2"
-val NBPATH = "models/NB/experimento2/bestModel"
+val TREEPATH = "models/TREE/experimento1"
+val NBPATH = "models/NB/experimento1"
 
 //creamos un Schema para el dataframe, con los tipos apropiados
 val adultSchema =StructType(Array( 
